@@ -14,6 +14,13 @@ fn main() {
             break;
         }
 
-        println!("{}: command not found", input.trim());
+        let mut input_array = input.trim().split_whitespace();
+
+        if input_array.next() == Some("echo") {
+            let text = input_array.collect::<Vec<&str>>().join(" ");
+            println!("{}", text)
+        } else {
+            println!("{}: command not found", input.trim());
+        }
     }
 }
