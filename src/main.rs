@@ -1,6 +1,23 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
 
+enum Command {
+    Echo,
+    Type,
+    Exit,
+}
+
+impl Command {
+    fn from_str(input: &str) -> Option<Command> {
+        match input.trim().to_lowercase().as_str() {
+            "echo" => Some(Command::Echo),
+            "type" => Some(Command::Type),
+            "exit" => Some(Command::Exit),
+            _ => None,
+        }
+    }
+}
+
 fn main() {
     loop {
         print!("$ ");
@@ -16,9 +33,16 @@ fn main() {
 
         let mut input_array = input.trim().split_whitespace();
 
-        if input_array.next() == Some("echo") {
-            let text = input_array.collect::<Vec<&str>>().join(" ");
-            println!("{}", text)
+        let command = input_array.next();
+        let arguments = input_array.collect::<Vec<&str>>().join(" ");
+
+        if command == Some("echo") {
+            println!("{}", arguments)
+        } else if command == Some("type") {
+            match Command::from_str(&arguments) {
+                Some(command) => println!("{} is a shell builtin", arguments),
+                None => println!("{}: not found", arguments),
+            }
         } else {
             println!("{}: command not found", input.trim());
         }
