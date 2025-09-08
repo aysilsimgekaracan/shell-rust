@@ -109,7 +109,7 @@ fn main() {
                 let full_path = PathBuf::from(path_dir).join(command.unwrap());
 
                 if file_exists_and_executable(&full_path) {
-                    let mut cmd = Command::new(&full_path);
+                    let mut cmd = Command::new(command.unwrap());
                     for arg in &inputs_excl_command {
                         cmd.arg(arg);
                     }
