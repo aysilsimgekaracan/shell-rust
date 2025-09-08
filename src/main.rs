@@ -4,19 +4,20 @@ use std::fs;
 use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
+use std::process::Command;
 
-enum Command {
+enum ShellCommand {
     Echo,
     Type,
     Exit,
 }
 
-impl Command {
-    fn from_str(input: &str) -> Option<Command> {
+impl ShellCommand {
+    fn from_str(input: &str) -> Option<ShellCommand> {
         match input.trim().to_lowercase().as_str() {
-            "echo" => Some(Command::Echo),
-            "type" => Some(Command::Type),
-            "exit" => Some(Command::Exit),
+            "echo" => Some(ShellCommand::Echo),
+            "type" => Some(ShellCommand::Type),
+            "exit" => Some(ShellCommand::Exit),
             _ => None,
         }
     }
@@ -77,12 +78,13 @@ fn main() {
         let mut input_array = input.trim().split_whitespace();
 
         let command = input_array.next();
-        let arguments = input_array.collect::<Vec<&str>>().join(" ");
+        let inputs_excl_command = input_array.collect::<Vec<&str>>();
+        let arguments = inputs_excl_command.join(" ");
 
         if command == Some("echo") {
             println!("{}", arguments)
         } else if command == Some("type") {
-            match Command::from_str(&arguments) {
+            match ShellCommand::from_str(&arguments) {
                 Some(_command) => println!("{} is a shell builtin", arguments),
                 None => {
                     let mut command_found = false;
@@ -102,7 +104,25 @@ fn main() {
                 }
             }
         } else {
-            println!("{}: command not found", input.trim());
+            let mut command_found = false;
+            for path_dir in &paths {
+                let full_path = PathBuf::from(path_dir).join(command.unwrap());
+
+                if file_exists_and_executable(&full_path) {
+                    let mut output = Command::new(command.unwrap());
+                    output
+                        .arg(arguments)
+                        .output()
+                        .expect("Failed to execute command");
+
+                    command_found = true;
+                    break;
+                }
+            }
+
+            if !command_found {
+                println!("{}: command not found", input.trim());
+            }
         }
     }
 }
