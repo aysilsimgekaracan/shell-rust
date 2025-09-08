@@ -109,11 +109,15 @@ fn main() {
                 let full_path = PathBuf::from(path_dir).join(command.unwrap());
 
                 if file_exists_and_executable(&full_path) {
-                    let mut output = Command::new(command.unwrap());
-                    output
-                        .arg(arguments)
-                        .output()
-                        .expect("Failed to execute command");
+                    let mut cmd = Command::new(&full_path);
+                    for arg in &inputs_excl_command {
+                        cmd.arg(arg);
+                    }
+
+                    let output = cmd.output().expect("Failed to execute command");
+
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    print!("{}", stdout);
 
                     command_found = true;
                     break;
