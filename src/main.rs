@@ -3,6 +3,7 @@ use std::fs;
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -11,6 +12,7 @@ enum ShellCommand {
     Type,
     Exit,
     Pwd,
+    Cd,
 }
 
 impl ShellCommand {
@@ -20,6 +22,7 @@ impl ShellCommand {
             "type" => Some(ShellCommand::Type),
             "exit" => Some(ShellCommand::Exit),
             "pwd" => Some(ShellCommand::Pwd),
+            "cd" => Some(ShellCommand::Cd),
             _ => None,
         }
     }
@@ -28,6 +31,24 @@ impl ShellCommand {
 fn print_current_dir() {
     let path = env::current_dir().unwrap();
     println!("{}", path.display());
+}
+
+fn change_current_directory(path: String) {
+    let root = Path::new(&path);
+    match env::set_current_dir(&root) {
+        Ok(()) => {
+            println!("{}", root.display());
+        }
+        Err(_e) => {
+            println!("cd: {}: No such file or directory", root.display());
+        }
+    }
+
+    assert!(env::set_current_dir(&root).is_ok());
+    println!(
+        "Successfully changed working directory to {}!",
+        root.display()
+    );
 }
 
 fn file_exists_and_executable(path: &PathBuf) -> bool {
@@ -112,6 +133,8 @@ fn main() {
             }
         } else if command == Some("pwd") {
             print_current_dir();
+        } else if command == Some("cd") {
+            change_current_directory(arguments);
         } else {
             let mut command_found = false;
             for path_dir in &paths {
