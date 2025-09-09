@@ -10,6 +10,7 @@ enum ShellCommand {
     Echo,
     Type,
     Exit,
+    Pwd,
 }
 
 impl ShellCommand {
@@ -18,9 +19,15 @@ impl ShellCommand {
             "echo" => Some(ShellCommand::Echo),
             "type" => Some(ShellCommand::Type),
             "exit" => Some(ShellCommand::Exit),
+            "pwd" => Some(ShellCommand::Pwd),
             _ => None,
         }
     }
+}
+
+fn print_current_dir() {
+    let path = env::current_dir().unwrap();
+    println!("{}", path.display());
 }
 
 fn file_exists_and_executable(path: &PathBuf) -> bool {
@@ -103,6 +110,8 @@ fn main() {
                     }
                 }
             }
+        } else if command == Some("pwd") {
+            print_current_dir();
         } else {
             let mut command_found = false;
             for path_dir in &paths {
