@@ -3,7 +3,6 @@ use std::fs;
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -33,8 +32,21 @@ fn print_current_dir() {
     println!("{}", path.display());
 }
 
-fn change_current_directory(path: String) {
-    let root = Path::new(&path);
+fn resolve_path(path: Option<String>) -> PathBuf {
+    match path.as_deref() {
+        Some("~") | None => env::var_os("HOME")
+            .and_then(|home| home.into_string().ok())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                eprintln!("cd: HOME not set");
+                PathBuf::from(".")
+            }),
+        Some(path_str) => PathBuf::from(path_str),
+    }
+}
+
+fn change_current_directory(path: Option<String>) {
+    let root = resolve_path(path);
     match env::set_current_dir(&root) {
         Ok(()) => {}
         Err(_e) => {
@@ -126,7 +138,7 @@ fn main() {
         } else if command == Some("pwd") {
             print_current_dir();
         } else if command == Some("cd") {
-            change_current_directory(arguments);
+            change_current_directory(Some(arguments));
         } else {
             let mut command_found = false;
             for path_dir in &paths {
