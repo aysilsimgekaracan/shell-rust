@@ -36,9 +36,7 @@ fn print_current_dir() {
 fn change_current_directory(path: String) {
     let root = Path::new(&path);
     match env::set_current_dir(&root) {
-        Ok(()) => {
-            println!("{}", root.display());
-        }
+        Ok(()) => {}
         Err(_e) => {
             println!("cd: {}: No such file or directory", root.display());
         }
