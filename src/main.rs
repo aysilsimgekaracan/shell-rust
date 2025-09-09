@@ -41,12 +41,6 @@ fn change_current_directory(path: String) {
             println!("cd: {}: No such file or directory", root.display());
         }
     }
-
-    assert!(env::set_current_dir(&root).is_ok());
-    println!(
-        "Successfully changed working directory to {}!",
-        root.display()
-    );
 }
 
 fn file_exists_and_executable(path: &PathBuf) -> bool {
