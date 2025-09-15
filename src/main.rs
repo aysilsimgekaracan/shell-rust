@@ -27,6 +27,39 @@ impl ShellCommand {
     }
 }
 
+fn parse_arguments(input: &str) -> Vec<String> {
+    let mut tokens = Vec::new(); // Collection of parsed arguments
+    let mut current_token = String::new(); // Current argument being built
+    let mut inside_quotes = false; // Are we inside single qutoes?
+
+    let mut chars = input.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        match ch {
+            '\'' => {
+                inside_quotes = !inside_quotes;
+            }
+
+            ' ' | '\t' if !inside_quotes => {
+                if !current_token.is_empty() {
+                    tokens.push(current_token.clone());
+                    current_token.clear();
+                }
+            }
+
+            _ => {
+                current_token.push(ch);
+            }
+        }
+    }
+
+    if !current_token.is_empty() {
+        tokens.push(current_token);
+    }
+
+    tokens
+}
+
 fn print_current_dir() {
     let path = env::current_dir().unwrap();
     println!("{}", path.display());
@@ -107,46 +140,50 @@ fn main() {
             break;
         }
 
-        let mut input_array = input.trim().split_whitespace();
+        let parsed_args = parse_arguments(input.trim());
 
-        let command = input_array.next();
-        let inputs_excl_command = input_array.collect::<Vec<&str>>();
-        let arguments = inputs_excl_command.join(" ");
+        if parsed_args.is_empty() {
+            continue;
+        }
 
-        if command == Some("echo") {
-            println!("{}", arguments)
-        } else if command == Some("type") {
-            match ShellCommand::from_str(&arguments) {
-                Some(_command) => println!("{} is a shell builtin", arguments),
+        let command = &parsed_args[0];
+        let arguments = &parsed_args[1..];
+
+        if command == "echo" {
+            println!("{}", arguments.join(" "));
+        } else if command == "type" {
+            let arg = &arguments[0];
+            match ShellCommand::from_str(&arg) {
+                Some(_command) => println!("{} is a shell builtin", arg),
                 None => {
                     let mut command_found = false;
                     for path_dir in &paths {
-                        let full_path = PathBuf::from(path_dir).join(&arguments);
+                        let full_path = PathBuf::from(path_dir).join(&arg);
 
                         if file_exists_and_executable(&full_path) {
-                            println!("{} is {}", arguments, full_path.display());
+                            println!("{} is {}", arg, full_path.display());
                             command_found = true;
                             break;
                         }
                     }
 
                     if !command_found {
-                        println!("{}: not found", arguments);
+                        println!("{}: not found", arg);
                     }
                 }
             }
-        } else if command == Some("pwd") {
+        } else if command == "pwd" {
             print_current_dir();
-        } else if command == Some("cd") {
-            change_current_directory(Some(arguments));
+        } else if command == "cd" {
+            change_current_directory(Some(arguments.join(" ")));
         } else {
             let mut command_found = false;
             for path_dir in &paths {
-                let full_path = PathBuf::from(path_dir).join(command.unwrap());
+                let full_path = PathBuf::from(path_dir).join(command);
 
                 if file_exists_and_executable(&full_path) {
-                    let mut cmd = Command::new(command.unwrap());
-                    for arg in &inputs_excl_command {
+                    let mut cmd = Command::new(command);
+                    for arg in arguments {
                         cmd.arg(arg);
                     }
 
