@@ -30,17 +30,20 @@ impl ShellCommand {
 fn parse_arguments(input: &str) -> Vec<String> {
     let mut tokens = Vec::new(); // Collection of parsed arguments
     let mut current_token = String::new(); // Current argument being built
-    let mut inside_quotes = false; // Are we inside single qutoes?
+    let mut inside_single_quotes = false; // Are we inside single qutoes?
+    let mut inside_double_quotes = false; // Are we inside double quotes?
 
     let mut chars = input.chars().peekable();
 
     while let Some(ch) = chars.next() {
         match ch {
-            '\'' => {
-                inside_quotes = !inside_quotes;
+            '\'' if !inside_double_quotes => {
+                inside_single_quotes = !inside_single_quotes;
             }
-
-            ' ' | '\t' if !inside_quotes => {
+            '"' if !inside_single_quotes => {
+                inside_double_quotes = !inside_double_quotes;
+            }
+            ' ' | '\t' if !inside_single_quotes && !inside_double_quotes => {
                 if !current_token.is_empty() {
                     tokens.push(current_token.clone());
                     current_token.clear();
