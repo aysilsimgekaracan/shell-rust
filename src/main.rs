@@ -51,7 +51,9 @@ fn parse_arguments(input: &str) -> Vec<String> {
             }
 
             '\\' if !inside_single_quotes && !inside_double_quotes => {
-                current_token.push(' ');
+                if let Some(next_ch) = chars.next() {
+                    current_token.push(next_ch);
+                }
             }
 
             _ => {
